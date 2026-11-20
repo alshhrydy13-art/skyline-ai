@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI أُفُق | SKYLINE</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;background:#080d19;color:white;
+font-family:Arial,sans-serif;min-height:100vh;
+display:flex;align-items:center;justify-content:center;
+}
+.chat{
+width:100%;max-width:430px;height:90vh;
+background:#101a2c;border:1px solid #193c70;
+border-radius:22px;display:flex;flex-direction:column;
+overflow:hidden;
+}
+header{padding:22px;background:#0c1424;border-bottom:1px solid #193c70}
+header h2{margin:0;color:#36a5ff}
+header p{margin:8px 0 0;color:#a8b9d0;font-size:13px}
+.messages{flex:1;padding:18px;overflow-y:auto}
+.msg{padding:12px 15px;border-radius:15px;
+margin-bottom:12px;max-width:85%;line-height:1.7;white-space:pre-wrap}
+.bot{background:#1b2b45;margin-left:auto}
+.user{background:#075a9d;margin-right:auto}
+form{display:flex;gap:8px;padding:14px;background:#0c1424}
+input{flex:1;min-width:0;padding:13px;border-radius:12px;
+border:1px solid #29476e;background:#142238;color:white}
+button{background:#087fe0;color:white;border:0;
+border-radius:12px;padding:0 18px;font-weight:bold}
+button:disabled{opacity:.5}
+</style>
+</head>
+<body>
+<div class="chat">
+<header>
+<h2>✦ AI أُفُق</h2>
+<p>مساعدك الذكي لاكتشاف العالم والتخطيط لرحلتك</p>
+</header>
+<div class="messages" id="messages">
+<div class="msg bot">أهلًا بك في أُفُق! أنا مساعدك السياحي الذكي. كيف أقدر أساعدك في رحلتك؟</div>
+</div>
+<form id="chatForm">
+<input id="message" placeholder="اكتب رسالتك هنا..." autocomplete="off" required>
+<button id="send">إرسال</button>
+</form>
+</div>
+<script>
+const form=document.getElementById("chatForm");
+const input=document.getElementById("message");
+const messagesBox=document.getElementById("messages");
+const send=document.getElementById("send");
+const history=[];
+
+function addMessage(text,type){
+const div=document.createElement("div");
+div.className="msg "+type;
+div.textContent=text;
+messagesBox.appendChild(div);
+messagesBox.scrollTop=messagesBox.scrollHeight;
+}
+
+form.addEventListener("submit",async(e)=>{
+e.preventDefault();
+const text=input.value.trim();
+if(!text)return;
+addMessage(text,"user");
+history.push({role:"user",content:text});
+input.value="";
+send.disabled=true;
+send.textContent="...";
+try{
+const response=await fetch("/api/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({messages:history})
+});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"تعذر الاتصال");
+addMessage(data.reply,"bot");
+history.push({role:"assistant",content:data.reply});
+}catch(error){
+addMessage("عذرًا، تعذر الاتصال بالمساعد حاليًا. حاولي مرة أخرى.","bot");
+history.pop();
+}
+send.disabled=false;
+send.textContent="إرسال";
+});
+</script>
+</body>
+</html>
